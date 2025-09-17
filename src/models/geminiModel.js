@@ -12,7 +12,7 @@ class geminiModel {
     async getProductSummary(productDescription, productId) {
         try {
             // Create cache key using Product:ID format
-            const cacheKey = `Product:${productId}`;
+            const cacheKey = `Summary:${productId}`;
 
             // Check Redis cache first
             const cachedSummary = await redisService.get(cacheKey);

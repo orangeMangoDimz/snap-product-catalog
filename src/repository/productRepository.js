@@ -22,7 +22,7 @@ const createProduct = async (product) => {
     }
 };
 
-const getProducts = async (offset, limit) => {
+const getProducts = async (limit, offset) => {
     try {
         const db = getDB();
         const q = "SELECT * FROM products LIMIT ? OFFSET ?";

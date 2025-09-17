@@ -4,13 +4,29 @@ const SuccessResponse = require("../responses/successResponse");
 const { ValidationError, NotFoundError } = require("../utils/error");
 const Logger = require("../utils/logger");
 const { StatusCodes } = require("http-status-codes");
+const redisService = require("../utils/redis");
 
 const getProducts = async (res, page, limit) => {
     try {
         const offset = (page - 1) * limit;
-        // Since I'm not using redis for caching, I'm going to call to DB twice to handle pagination
-        const products = await productRepository.getProducts(offset, limit);
-        const total = await productRepository.getTotalProducts();
+
+        const cacheKey = `Product:page:${page}:limit:${limit}`;
+
+        let products = [];
+        let total = 0;
+
+        const cachedData = await redisService.get(cacheKey);
+        if (cachedData) {
+            Logger.info(`Returning cached products for key: ${cacheKey}`);
+            products = cachedData.products;
+            total = cachedData.total;
+        } else {
+            products = await productRepository.getProducts(limit, offset);
+            total = await productRepository.getTotalProducts();
+
+            const dataToCache = { products, total };
+            await redisService.set(cacheKey, dataToCache);
+        }
 
         const paginationData = {
             page,
@@ -21,7 +37,7 @@ const getProducts = async (res, page, limit) => {
 
         return SuccessResponse(
             res,
-            StatusCodes.CREATED,
+            StatusCodes.OK,
             paginationData,
             "Products fetched successfully."
         );
@@ -30,6 +46,7 @@ const getProducts = async (res, page, limit) => {
             Logger.warn("Validation check error");
             return ErrorResponse(error, error.statusCode, error.message);
         }
+        Logger.error(`Failed to get products: ${error}`);
         return ErrorResponse(
             res,
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -40,10 +57,18 @@ const getProducts = async (res, page, limit) => {
 
 const getProductByID = async (productID, res) => {
     try {
-        const product = await productRepository.getProductByID(productID);
+        const cacheKey = `Product:${productID}`;
 
-        if (!product) {
-            throw new NotFoundError("Product not found");
+        let product = await redisService.get(cacheKey);
+
+        if (product) {
+            Logger.info(`Returning cached product for key: ${cacheKey}`);
+        } else {
+            product = await productRepository.getProductByID(productID);
+            if (!product) {
+                throw new NotFoundError("Product not found");
+            }
+            await redisService.set(cacheKey, product);
         }
 
         return SuccessResponse(
@@ -57,6 +82,7 @@ const getProductByID = async (productID, res) => {
             Logger.warn(`Product with ID ${productID} not found`);
             return ErrorResponse(res, error.statusCode, error.message);
         }
+        Logger.error(`Failed to get product by ID: ${error}`);
         return ErrorResponse(
             res,
             StatusCodes.INTERNAL_SERVER_ERROR,
