@@ -7,6 +7,9 @@ module.exports = {
     db: {
         path: process.env.DB_PATH || "./data/database.sqlite",
     },
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY,
+    },
     api: {
         prefix: process.env.API_PREFIX || "/api/v1",
     },
