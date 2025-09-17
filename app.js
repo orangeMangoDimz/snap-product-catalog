@@ -5,6 +5,7 @@ const config = require("./config");
 const v1Routes = require("./src/api/routes/v1");
 const { SuccessResponse } = require("./src/responses");
 const { StatusCodes } = require("http-status-codes");
+const redisService = require("./src/utils/redis");
 
 const app = express();
 
@@ -16,8 +17,9 @@ app.options("*", cors()); // TODO: need to adjust later
 
 app.get("/health", (req, res) => {
     const healthData = {
-        env: config.api.env,
+        env: config.env,
         status: "ok",
+        redis: redisService.isHealthy(),
     };
     return SuccessResponse(res, StatusCodes.OK, healthData);
 });

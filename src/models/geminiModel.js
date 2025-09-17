@@ -11,6 +11,16 @@ class geminiModel {
 
     async getProductSummary(productDescription, productId) {
         try {
+            // Create cache key using Product:ID format
+            const cacheKey = `Product:${productId}`;
+
+            // Check Redis cache first
+            const cachedSummary = await redisService.get(cacheKey);
+            if (cachedSummary) {
+                Logger.info(`Returning cached summary for key: ${cacheKey}`);
+                return cachedSummary;
+            }
+
             // If not cached, make API call to Gemini
             Logger.info(`Cache miss, making API call for key: ${cacheKey}`);
             const instruction = `
@@ -26,6 +36,9 @@ class geminiModel {
 
             const summary = response.text;
 
+            // Cache the response in Redis
+            await redisService.set(cacheKey, summary);
+            Logger.info(`Cached summary for key: ${cacheKey}`);
 
             return summary;
         } catch (error) {

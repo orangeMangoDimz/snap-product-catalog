@@ -10,6 +10,13 @@ module.exports = {
     gemini: {
         apiKey: process.env.GEMINI_API_KEY,
     },
+    redis: {
+        host: process.env.REDIS_HOST || "localhost",
+        port: process.env.REDIS_PORT || 6379,
+        password: process.env.REDIS_PASSWORD || null,
+        db: process.env.REDIS_DB || 0,
+        ttl: process.env.REDIS_TTL || 3600, 
+    },
     api: {
         prefix: process.env.API_PREFIX || "/api/v1",
     },
