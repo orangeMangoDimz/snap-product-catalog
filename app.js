@@ -13,7 +13,6 @@ app.use(helmet());
 app.use(express.json());
 
 app.use(cors());
-app.options("*", cors()); // TODO: need to adjust later
 
 app.get("/health", (req, res) => {
     const healthData = {
