@@ -1,4 +1,4 @@
-const redis = require("redis");
+const redisClient = require("redis");
 const config = require("../../config");
 const Logger = require("./logger");
 
@@ -10,11 +10,10 @@ class RedisService {
 
     async connect() {
         try {
-            this.client = redis.createClient({
-                host: config.redis.host,
-                port: config.redis.port,
-                password: config.redis.password,
-                db: config.redis.db,
+            const { redis } = config;
+            const { host, port, password, db } = redis;
+            this.client = redisClient.createClient({
+                url: `redis://${password ? `:${password}@` : ''}${host}:${port}/${db}`
             });
 
             // Handle all redis events
