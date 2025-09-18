@@ -15,7 +15,7 @@ module.exports = {
         port: process.env.REDIS_PORT || 6379,
         password: process.env.REDIS_PASSWORD || null,
         db: process.env.REDIS_DB || 0,
-        ttl: process.env.REDIS_TTL || 3600, 
+        ttl: process.env.REDIS_TTL || 5 * 60,  // 5 minutes to prevent long inconsistency data product
     },
     api: {
         prefix: process.env.API_PREFIX || "/api/v1",
