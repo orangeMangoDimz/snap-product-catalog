@@ -6,11 +6,11 @@ const Logger = require("../utils/logger");
 const { StatusCodes } = require("http-status-codes");
 const redisService = require("../utils/redis");
 
-const getProducts = async (res, page, limit) => {
+const getProducts = async (res, page, limit, q, filter) => {
     try {
         const offset = (page - 1) * limit;
 
-        const cacheKey = `Product:page:${page}:limit:${limit}`;
+        const cacheKey = `Product:page:${page}:limit:${limit}:q:${q}:filter:${filter}`;
 
         let products = [];
         let total = 0;
@@ -21,8 +21,8 @@ const getProducts = async (res, page, limit) => {
             products = cachedData.products;
             total = cachedData.total;
         } else {
-            products = await productRepository.getProducts(limit, offset);
-            total = await productRepository.getTotalProducts();
+            products = await productRepository.getProducts(limit, offset, q, filter);
+            total = await productRepository.getTotalProducts(q, filter);
 
             const dataToCache = { products, total };
             await redisService.set(cacheKey, dataToCache);

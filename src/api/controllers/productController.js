@@ -4,7 +4,9 @@ const getProducts = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 50;
-        await productService.getProducts( res, page, limit);
+        const q = req.query.q || ""
+        const filter = req.query.filter || ""
+        await productService.getProducts( res, page, limit, q, filter);
     } catch (error) {
         next(error);
     }

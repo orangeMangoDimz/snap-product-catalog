@@ -16,29 +16,63 @@ const createProduct = async (product) => {
             product.description,
         ]);
         return productModel.toJSON(result);
-    } catch (err0r) {
-        Logger.error(`Failed to create product: ${error}`);
-        throw new InternalServerError(error.message);
+    } catch (error) {
+        Logger.error(`Failed to create product`, error);
+        throw new InternalServerError(error);
     }
 };
 
-const getProducts = async (limit, offset) => {
+const getProducts = async (limit, offset, q, filter) => {
     try {
         const db = getDB();
-        const q = "SELECT * FROM products LIMIT ? OFFSET ?";
-        const products = await db.all(q, [limit, offset]);
+        let sqlQuery =
+            "SELECT id, name, price, category, image_url, description FROM products";
+
+        let queryParams = [];
+
+        if (q != "" && filter != "") {
+            sqlQuery += " WHERE name LIKE ? AND category = ?";
+            queryParams = [`%${q}%`, filter];
+        } else if (q != "") {
+            sqlQuery += " WHERE name LIKE ?";
+            queryParams = [`%${q}%`];
+        } else if (filter != "") {
+            sqlQuery += " WHERE category = ?";
+            queryParams = [filter];
+        }
+        sqlQuery += " LIMIT ? OFFSET ?";
+        const products = await db.all(sqlQuery, [
+            ...queryParams,
+            limit,
+            offset,
+        ]);
         return products.map((product) => productModel.toJSON(product));
     } catch (error) {
-        Logger.error(`Failed to get products: ${error}`);
-        throw new InternalServerError(error.message);
+        Logger.error(`Failed to get products`, error);
+        throw new InternalServerError(error);
     }
 };
 
-const getTotalProducts = async () => {
-    const db = getDB();
-    const q = "SELECT COUNT(*) as total FROM products";
-    const result = await db.get(q);
-    return result.total
+const getTotalProducts = async (q, filter) => {
+    try {
+        const db = getDB();
+        let sqlQuery = "SELECT COUNT(*) as total FROM products";
+        let queryParams = [];
+        if (q != "" && filter != "") {
+            sqlQuery += " WHERE name LIKE ? AND category = ?";
+            queryParams = [q, filter];
+        } else if (q != "") {
+            sqlQuery += " WHERE name LIKE ?";
+        } else if (filter != "") {
+            sqlQuery += " WHERE category = ?";
+            queryParams = [filter];
+        }
+        const result = await db.get(sqlQuery, [...queryParams]);
+        return result.total;
+    } catch (error) {
+        Logger.error(`Failed to get total products`, error);
+        throw new InternalServerError(error);
+    }
 };
 
 const getProductByID = async (id) => {
